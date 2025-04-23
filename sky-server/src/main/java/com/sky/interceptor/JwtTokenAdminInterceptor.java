@@ -1,6 +1,8 @@
 package com.sky.interceptor;
 
 import com.sky.constant.JwtClaimsConstant;
+import com.sky.constant.MessageConstant;
+import com.sky.exception.LoginFailedException;
 import com.sky.properties.JwtProperties;
 import com.sky.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -32,20 +34,25 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
      * @throws Exception
      */
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        //判断当前拦截到的是Controller的方法还是其他资源
+        //1. 判断当前拦截到的是Controller的方法还是其他资源
         if (!(handler instanceof HandlerMethod)) {
             //当前拦截到的不是动态方法，直接放行
             return true;
         }
 
-		//获取登录数据员工id
-        Long employeeId = (Long) request.getSession().getAttribute("employee");
-        if(employeeId!=null){
-			//如果有登录数据，代表一登录，放行
+        // 2. 获取请求头中约定好的key的令牌数据
+        String token = request.getHeader(jwtProperties.getAdminTokenName());
+
+        try {
+            // 3. 解析令牌得到载荷数据
+            Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), token);
+            Long employeeId = (Long) claims.get(JwtClaimsConstant.EMP_ID);
+            log.info("校验得到的员工id：{}", employeeId);
+            // 3.1 没问题，就通过放行
             return true;
-        }else{
-			//否则，发送未认证错误信息
-			response.setStatus(401);
+        } catch (Exception e) {
+            // 3.2 有问题，响应401
+            response.setStatus(401);
             return false;
         }
     }
