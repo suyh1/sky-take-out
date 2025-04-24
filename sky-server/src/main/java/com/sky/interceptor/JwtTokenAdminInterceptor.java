@@ -2,6 +2,7 @@ package com.sky.interceptor;
 
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.constant.MessageConstant;
+import com.sky.context.BaseContext;
 import com.sky.exception.LoginFailedException;
 import com.sky.properties.JwtProperties;
 import com.sky.utils.JwtUtil;
@@ -46,7 +47,8 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
         try {
             // 3. 解析令牌得到载荷数据
             Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), token);
-            Long employeeId = (Long) claims.get(JwtClaimsConstant.EMP_ID);
+            Long employeeId = Long.valueOf(claims.get(JwtClaimsConstant.EMP_ID).toString());
+            BaseContext.setCurrentId(employeeId);
             log.info("校验得到的员工id：{}", employeeId);
             // 3.1 没问题，就通过放行
             return true;
